@@ -7,6 +7,8 @@
 # Description: This will be the email service created for Ethan's Project. It will allow the user to email data to a
 #              specified email address
 
+import email
+
 
 def generate_email():
     pass
