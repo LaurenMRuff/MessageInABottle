@@ -71,8 +71,9 @@ decode_msg_btn = ttk.Button(miab_gui_service,
                             text='Decode Message')
 reply_btn = ttk.Button(miab_gui_service,
                        text='Reply')
+default = 'Click ''Browse'' to select an image'
 default_msg = ttk.Label(miab_gui_service,
-                        text='Click ''Browse'' to select an image',
+                        text=default,
                         font=("Garamond", 12))
 
 # help screen widgets
@@ -115,19 +116,63 @@ def open_welcome():
     back_btn.grid_forget()
 
 
-def encode_press():
+def close_encode():
+    global encode_on
+    if encode_on:
+        # if the encode page is visible
+        encode_label.grid_forget()
+        # img_label.configure(image=img)
+        img_label.grid_forget()
+        user_input.grid_forget()
+        browse_btn.grid_forget()
+        encode_msg_btn.grid_forget()
+        export_btn.grid_forget()
+        email_btn.grid_forget()
 
+        encode_on = False
+
+
+def close_decode():
+    global decode_on
     if decode_on:
-        user_input.config(state=tk.NORMAL)
+        # if the decode page is visible
+
+        decode_label.grid_forget()
+        img_label.grid_forget()
+        user_input.grid_forget()
+        browse_btn.grid_forget()
         decode_msg_btn.grid_forget()
         reply_btn.grid_forget()
         default_msg.grid_forget()
 
+        decode_on = False
+
+
+def close_help():
+    global help_on
+    if help_on:
+        miab_gui_service.rowconfigure(1, weight=1)
+
+        # add the help screen widgets
+        encode_help.grid_forget()
+        decode_help.grid_forget()
+        more_info.grid_forget()
+        more_info_link.grid_forget()
+
+        help_on = False
+
+
+def encode_press():
+
+    # close other screen widgets
+    close_welcome()
+    close_decode()
+    close_help()
+
     global encode_on
     encode_on = True
 
-    # remove the welcome screen widgets
-    close_welcome()
+    clearToTextInput()
 
     encode_label.grid(column=0, row=0, columnspan=2)
 
@@ -183,15 +228,9 @@ def load_img(path):
 
         w, h = img_to_crop.size
 
-        print(w, h)
-
         size_tuple = get_crop_size(w, h)
 
-        print(size_tuple)
-
         cropped = img_to_crop.crop(size_tuple)
-
-        print(cropped)
 
         img = ImageTk.PhotoImage(cropped.resize(resize))
         img_label.Image = img
@@ -226,6 +265,9 @@ def decode_press():
 
     # remove the welcome screen widgets
     close_welcome()
+    close_encode()
+    close_help()
+    clearToTextInput()
 
     decode_label.grid(column=0, row=0, columnspan=2)
 
@@ -233,8 +275,8 @@ def decode_press():
 
     # all other widgets
     user_input.grid(column=1, row=1, sticky=tk.N)
-    user_input.config(state=tk.DISABLED)
     user_input.insert('1.0', 'The decoded message will appear here')
+    user_input.config(state=tk.DISABLED)
 
     browse_btn.grid(column=0, row=1, ipady=5, sticky=tk.S)
     decode_msg_btn.grid(column=1, row=1, ipady=5, sticky=tk.S)
@@ -251,6 +293,8 @@ def help_press():
 
     # remove the welcome screen widgets
     close_welcome()
+    close_encode()
+    close_decode()
 
     miab_gui_service.rowconfigure(1, weight=7)
 
@@ -263,43 +307,12 @@ def help_press():
 
 
 def back_press():
-    global encode_on, decode_on, help_on
+
+    close_encode()
+    close_decode()
+    close_help()
 
     open_welcome()
-
-    if encode_on:
-        # if the encode page is visible
-        encode_label.grid_forget()
-        # img_label.configure(image=img)
-        img_label.grid_forget()
-        user_input.grid_forget()
-        browse_btn.grid_forget()
-        encode_msg_btn.grid_forget()
-        export_btn.grid_forget()
-        email_btn.grid_forget()
-
-        encode_on = False
-
-    if decode_on:
-        # if the decode page is visible
-
-        decode_label.grid_forget()
-        img_label.grid_forget()
-        user_input.grid_forget()
-        browse_btn.grid_forget()
-        decode_msg_btn.grid_forget()
-        reply_btn.grid_forget()
-
-        decode_on = False
-
-    if help_on:
-        # if the help page is visible
-        encode_help.grid_forget()
-        decode_help.grid_forget()
-        more_info.grid_forget()
-        more_info_link.grid_forget()
-
-        help_on = False
 
 
 def browse_press():
@@ -321,6 +334,8 @@ def browse_press():
 
 
 def reply_press():
+    # calls email service
+    # email service opens it's own GUI?
     pass
 
 
@@ -367,6 +382,10 @@ def hyperlink(url):
 
     # change the color of the link to indicate it was clicked
     more_info_link.configure(foreground="purple")
+
+
+def clearToTextInput():
+    user_input.delete("1.0", "end")
 
 
 def MIAB_GUI():
