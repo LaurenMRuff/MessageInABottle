@@ -1,22 +1,25 @@
 # AUTHOR: Lauren Ruff
 # Email: ruffl@oregonstate.edu
-# Assignment: 6, minimum viable product (MVP)
-# Due Date: February 14 2022
+# Assignment: 8, Integration
+# Due Date: February 28 2022
 # Version: 1.0
 # File: MAIB_GUI.py
 # Description: This file contains the code for creating the GUI the user will interact with and eventually will include
 #              all button functionality
+
 import getpass
 import tkinter as tk
 from tkinter import ttk, Text, filedialog
 from PIL import Image, ImageTk
 import webbrowser
+# import Encode_Decode
 
 miab_gui_service = tk.Tk()
 
 help_link = "https://www.mygreatlearning.com/blog/image-steganography-explained/"
 
 # know which window is open
+welcome_on = True
 encode_on = False
 decode_on = False
 help_on = False
@@ -44,7 +47,8 @@ encode_label = ttk.Label(miab_gui_service,
                          text="Encode a Message",
                          font=("Garamond", 18))
 # DEFAULT IMAGE - WILL BE SELECTED BY IMAGE SERVICE LATER
-img_path = "./MsgInABottle_DEFAULT_IMAGE.png"
+img_path = "./MIAB_DEFAULT.jpg"
+img = Image.open(img_path)
 img_label = tk.Label()
 browse_btn = ttk.Button(miab_gui_service,
                         text='Browse')
@@ -94,17 +98,10 @@ more_info_link = ttk.Label(miab_gui_service,
                            foreground='blue')
 
 
-def close_welcome():
-    welcome_label_1.grid_forget()
-    welcome_label_2.grid_forget()
-    encode_btn.grid_forget()
-    decode_btn.grid_forget()
-
-    back_btn.grid(column=0, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NW)
-
-
 def open_welcome():
     # welcome screen widgets
+    global welcome_on
+    welcome_on = True
 
     miab_gui_service.rowconfigure(1, weight=1)
 
@@ -116,9 +113,18 @@ def open_welcome():
     back_btn.grid_forget()
 
 
-def close_encode():
-    global encode_on
-    if encode_on:
+def close(w, e, d, h):
+
+    if w:
+        welcome_label_1.grid_forget()
+        welcome_label_2.grid_forget()
+        encode_btn.grid_forget()
+        decode_btn.grid_forget()
+
+        back_btn.grid(column=0, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NW)
+
+    if e:
+        global encode_on
         # if the encode page is visible
         encode_label.grid_forget()
         # img_label.configure(image=img)
@@ -131,10 +137,8 @@ def close_encode():
 
         encode_on = False
 
-
-def close_decode():
-    global decode_on
-    if decode_on:
+    if d:
+        global decode_on
         # if the decode page is visible
 
         decode_label.grid_forget()
@@ -147,10 +151,8 @@ def close_decode():
 
         decode_on = False
 
-
-def close_help():
-    global help_on
-    if help_on:
+    if h:
+        global help_on
         miab_gui_service.rowconfigure(1, weight=1)
 
         # add the help screen widgets
@@ -165,13 +167,15 @@ def close_help():
 def encode_press():
 
     # close other screen widgets
-    close_welcome()
-    close_decode()
-    close_help()
+    global welcome_on, encode_on, decode_on, help_on
+    close(welcome_on, encode_on, decode_on, help_on)
+    # close_welcome()
+    # close_decode()
+    # close_help()
 
-    global encode_on
     encode_on = True
 
+    user_input.config(state=tk.NORMAL)
     clearToTextInput()
 
     encode_label.grid(column=0, row=0, columnspan=2)
@@ -189,14 +193,14 @@ def encode_press():
 
     browse_btn.configure(command=lambda: browse_press())
     encode_msg_btn.configure(command=lambda: non_func_press("this button will encode the message into the image"))
-    export_btn.configure(command=lambda: export_press(img_path))
+    export_btn.configure(command=lambda: export_press())
     email_btn.configure(command=lambda: non_func_press("this button will email the message into a recipient"))
 
 
 def get_crop_size(w, h):
     if w == h:
         # if the image is already square, return the current height and width
-        return [0, 0, w, h]
+        return 0, 0, w, h
 
     elif w > h:
 
@@ -206,7 +210,7 @@ def get_crop_size(w, h):
         upper = diff
         lower = w - diff
 
-        return [0, upper, h, lower]
+        return 0, upper, h, lower
 
     else:
         # h > w
@@ -216,25 +220,30 @@ def get_crop_size(w, h):
         left = diff
         right = h - diff
 
-        return [0, left, w, right]
+        return 0, left, w, right
 
 
 def load_img(path):
 
     if path != "":
+
+        global img
+
+        default_msg.grid_forget()
+
         # crop the image to be a square
         resize = (340, 340)
-        img_to_crop = Image.open(path)
+        img = Image.open(path)
 
-        w, h = img_to_crop.size
+        w, h = img.size
 
         size_tuple = get_crop_size(w, h)
 
-        cropped = img_to_crop.crop(size_tuple)
+        img = img.crop(size_tuple)
 
-        img = ImageTk.PhotoImage(cropped.resize(resize))
-        img_label.Image = img
-        img_label.configure(image=img)
+        img2 = ImageTk.PhotoImage(img.resize(resize))
+        img_label.Image = img2
+        img_label.configure(image=img2)
 
         img_label.grid(column=0, row=1, sticky=tk.N)
 
@@ -260,20 +269,19 @@ def email_press():
 
 def decode_press():
 
-    global decode_on
-    decode_on = True
+    # close other screen widgets
+    global welcome_on, encode_on, decode_on, help_on
+    close(welcome_on, encode_on, decode_on, help_on)
 
-    # remove the welcome screen widgets
-    close_welcome()
-    close_encode()
-    close_help()
     clearToTextInput()
+
+    decode_on = True
 
     decode_label.grid(column=0, row=0, columnspan=2)
 
     load_img("")
 
-    # all other widgets
+    # other widgets
     user_input.grid(column=1, row=1, sticky=tk.N)
     user_input.insert('1.0', 'The decoded message will appear here')
     user_input.config(state=tk.DISABLED)
@@ -288,13 +296,13 @@ def decode_press():
 
 
 def help_press():
-    global help_on
-    help_on = True
 
     # remove the welcome screen widgets
-    close_welcome()
-    close_encode()
-    close_decode()
+    # close other screen widgets
+    global welcome_on, encode_on, decode_on, help_on
+    close(welcome_on, encode_on, decode_on, help_on)
+
+    help_on = True
 
     miab_gui_service.rowconfigure(1, weight=7)
 
@@ -308,9 +316,8 @@ def help_press():
 
 def back_press():
 
-    close_encode()
-    close_decode()
-    close_help()
+    global welcome_on, encode_on, decode_on, help_on
+    close(welcome_on, encode_on, decode_on, help_on)
 
     open_welcome()
 
@@ -333,13 +340,7 @@ def browse_press():
         load_img(filename)
 
 
-def reply_press():
-    # calls email service
-    # email service opens it's own GUI?
-    pass
-
-
-def export_press(img):
+def export_press():
     # browse for a png file
     # COMMENT: adapted from the source link for saving a file
     # DATE: February 14 2022
@@ -349,10 +350,7 @@ def export_press(img):
 
     file_loc = filedialog.asksaveasfilename(title='Save your image',
                                             initialdir=initial_dir,
-                                            filetypes=[(".png", ".png"),
-                                                       (".jpg", ".jpg")],
-                                            defaultextension=[("image", ".png"),
-                                                              ("image", ".jpg")])
+                                            filetypes=[(".png", ".png")])
     if file_loc != "":
 
         img.save(file_loc)
