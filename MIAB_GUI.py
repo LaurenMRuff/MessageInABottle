@@ -1,200 +1,275 @@
 # AUTHOR: Lauren Ruff
 # Email: ruffl@oregonstate.edu
 # Assignment: 8, Integration
-# Due Date: February 28 2022
+# Due Date: February 28, 2022
 # Version: 1.0
-# File: MAIB_GUI.py
+# File: MIAB_GUI.py
 # Description: This file contains the code for creating the GUI the user will interact with and eventually will include
 #              all button functionality
 
-import getpass
+import os.path
 import tkinter as tk
-from tkinter import ttk, Text, filedialog
+from tkinter import ttk, Text, filedialog, Entry, StringVar
 from PIL import Image, ImageTk
 import webbrowser
-# import Encode_Decode
 
 miab_gui_service = tk.Tk()
 
-help_link = "https://www.mygreatlearning.com/blog/image-steganography-explained/"
-
-# know which window is open
-welcome_on = True
-encode_on = False
-decode_on = False
-help_on = False
-
-# welcome screen widgets
-welcome_label_1 = ttk.Label(
-    miab_gui_service,
-    text='Welcome to Message in a Bottle!',
-    font=("Garamond", 24))
-welcome_label_2 = ttk.Label(
-    miab_gui_service,
-    text='Click the buttons below to get started or the help button to learn more!',
-    font=("Garamond", 14))
-back_btn = ttk.Button(miab_gui_service,
-                      text='back')
-help_btn = ttk.Button(miab_gui_service,
-                      text='help')
-encode_btn = ttk.Button(miab_gui_service,
-                        text="encode a message")
-decode_btn = ttk.Button(miab_gui_service,
-                        text="decode a message")
-
-# encode screen widgets
-encode_label = ttk.Label(miab_gui_service,
-                         text="Encode a Message",
-                         font=("Garamond", 18))
-# DEFAULT IMAGE - WILL BE SELECTED BY IMAGE SERVICE LATER
-img_path = "./MIAB_DEFAULT.jpg"
-img = Image.open(img_path)
-img_label = tk.Label()
-browse_btn = ttk.Button(miab_gui_service,
-                        text='Browse')
-user_input = Text(miab_gui_service,
-                  height=18.5,
-                  width=40,
-                  wrap='word')
-encode_msg_btn = ttk.Button(miab_gui_service,
-                            text='Encode Message')
-export_btn = ttk.Button(miab_gui_service,
-                        text='Export')
-email_btn = ttk.Button(miab_gui_service,
-                       text='Email')
-
-# decode screen widgets
-decode_label = ttk.Label(miab_gui_service,
-                         text="Decode a Message",
-                         font=("Garamond", 18))
-msg_output = Text(miab_gui_service,
-                  height=18.5,
-                  width=40,
-                  wrap='word')
-decode_msg_btn = ttk.Button(miab_gui_service,
-                            text='Decode Message')
-reply_btn = ttk.Button(miab_gui_service,
-                       text='Reply')
-default = 'Click ''Browse'' to select an image'
-default_msg = ttk.Label(miab_gui_service,
-                        text=default,
-                        font=("Garamond", 12))
-
-# help screen widgets
-encode_help = ttk.Label(miab_gui_service,
-                        text='These are the instructions for encoding a message in an image',
-                        font=("Garamond", 16),
-                        wraplength=400)
-decode_help = ttk.Label(miab_gui_service,
-                        text='These are the instructions for decoding a message from an image',
-                        font=("Garamond", 16),
-                        wraplength=400)
-more_info = ttk.Label(miab_gui_service,
-                      text='Click this link for more information on steganography:',
-                      font=("Garamond", 14))
-more_info_link = ttk.Label(miab_gui_service,
-                           text=help_link,
-                           font=("Garamond", 16),
-                           foreground='blue')
+welcome_frame = tk.Frame(miab_gui_service)
+encode_frame = tk.Frame(miab_gui_service)
+decode_frame = tk.Frame(miab_gui_service)
+help_frame = tk.Frame(miab_gui_service)
 
 
-def open_welcome():
+# ----------------- SCREENS -----------------
+def welcome_screen_on():
+
+    welcome_frame.rowconfigure(0, weight=1)
+    welcome_frame.rowconfigure(1, weight=1)
+    welcome_frame.rowconfigure(2, weight=1)
+    welcome_frame.rowconfigure(3, weight=1)
+    welcome_frame.columnconfigure(0, weight=1)
+    welcome_frame.columnconfigure(1, weight=1)
+
     # welcome screen widgets
-    global welcome_on
-    welcome_on = True
+    welcome_label_1 = ttk.Label(
+        welcome_frame,
+        text='Welcome to Message in a Bottle!',
+        font=("Garamond", 24))
+    welcome_label_2 = ttk.Label(
+        welcome_frame,
+        text='Click the buttons below to get started or the help button to learn more!',
+        font=("Garamond", 14))
+    encode_btn = ttk.Button(welcome_frame,
+                            text="encode a message",
+                            command=lambda: encode_screen_on())
+    decode_btn = ttk.Button(welcome_frame,
+                            text="decode a message",
+                            command=lambda: decode_screen_on())
+    help_btn = ttk.Button(welcome_frame,
+                          text='help',
+                          command=lambda: help_screen_on())
 
-    miab_gui_service.rowconfigure(1, weight=1)
+    # add the widgets to the screen
+    help_btn.grid(row=0, column=1, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NE)
+    welcome_label_1.grid(row=1, column=0, columnspan=2)
+    welcome_label_2.grid(row=2, column=0, columnspan=2)
+    encode_btn.grid(row=3, column=0,  ipadx=7, ipady=7, sticky=tk.N)
+    decode_btn.grid(row=3, column=1, ipadx=7, ipady=7, sticky=tk.N)
 
-    welcome_label_1.grid(column=0, row=1, columnspan=2)
-    welcome_label_2.grid(column=0, row=2, columnspan=2, sticky=tk.N)
-    encode_btn.grid(column=0, row=3, ipadx=7, ipady=7, sticky=tk.N)
-    decode_btn.grid(column=1, row=3, ipadx=7, ipady=7, sticky=tk.N)
-
-    back_btn.grid_forget()
-
-
-def close(w, e, d, h):
-
-    if w:
-        welcome_label_1.grid_forget()
-        welcome_label_2.grid_forget()
-        encode_btn.grid_forget()
-        decode_btn.grid_forget()
-
-        back_btn.grid(column=0, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NW)
-
-    if e:
-        global encode_on
-        # if the encode page is visible
-        encode_label.grid_forget()
-        # img_label.configure(image=img)
-        img_label.grid_forget()
-        user_input.grid_forget()
-        browse_btn.grid_forget()
-        encode_msg_btn.grid_forget()
-        export_btn.grid_forget()
-        email_btn.grid_forget()
-
-        encode_on = False
-
-    if d:
-        global decode_on
-        # if the decode page is visible
-
-        decode_label.grid_forget()
-        img_label.grid_forget()
-        user_input.grid_forget()
-        browse_btn.grid_forget()
-        decode_msg_btn.grid_forget()
-        reply_btn.grid_forget()
-        default_msg.grid_forget()
-
-        decode_on = False
-
-    if h:
-        global help_on
-        miab_gui_service.rowconfigure(1, weight=1)
-
-        # add the help screen widgets
-        encode_help.grid_forget()
-        decode_help.grid_forget()
-        more_info.grid_forget()
-        more_info_link.grid_forget()
-
-        help_on = False
+    welcome_frame.pack(fill=tk.BOTH, expand=True)
 
 
-def encode_press():
+def welcome_screen_off():
+    # remove the welcome screen widgets
+    welcome_frame.forget()
 
-    # close other screen widgets
-    global welcome_on, encode_on, decode_on, help_on
-    close(welcome_on, encode_on, decode_on, help_on)
-    # close_welcome()
-    # close_decode()
-    # close_help()
 
-    encode_on = True
+def encode_screen_on():
+    # turn other screens off
+    welcome_screen_off()
+    decode_screen_off()
+    help_screen_off()
 
-    user_input.config(state=tk.NORMAL)
-    clearToTextInput()
+    # create the grid
+    encode_frame.rowconfigure(0, weight=1)
+    encode_frame.rowconfigure(1, weight=1)
+    encode_frame.rowconfigure(2, weight=1)
+    encode_frame.rowconfigure(3, weight=1)
+    encode_frame.columnconfigure(0, weight=1)
+    encode_frame.columnconfigure(1, weight=1)
+
+    # get the image
+    img_path_e = get_image()
+
+    # create the widgets
+    encode_label = ttk.Label(encode_frame,
+                             text="Encode a Message",
+                             font=("Garamond", 18))
+    img_label_e = tk.Label(encode_frame)
+    user_input_e = Text(encode_frame,
+                        height=18.5,
+                        width=40,
+                        wrap='word')
+    browse_btn_e = ttk.Button(encode_frame,
+                              text='Browse',
+                              command=lambda: browse_btn_press(img_label_e))
+    encode_msg_btn = ttk.Button(encode_frame,
+                                text='Encode Message',
+                                command=lambda: encode_msg_press())
+    export_btn = ttk.Button(encode_frame,
+                            text='Export',
+                            command=lambda: export_btn_press(img_path_e))
+    email_btn = ttk.Button(encode_frame,
+                           text='Email',
+                           command=lambda: email_btn_press(img_path_e))
+    help_btn = ttk.Button(encode_frame,
+                          text='help',
+                          command=lambda: help_screen_on())
+    back_btn = ttk.Button(encode_frame,
+                          text='back',
+                          command=lambda: back_btn_press())
 
     encode_label.grid(column=0, row=0, columnspan=2)
 
     # load the image
-    load_img(img_path)
+    load_img(img_label_e, img_path_e)
 
-    # all other widgets
-    user_input.grid(column=1, row=1, sticky=tk.N)
-    user_input.insert('1.0', "This is a default message. Delete me and write your own!")
-    browse_btn.grid(column=0, row=1, ipady=5, sticky=tk.S)
+    # reset from decode screen being on
+    user_input_e.config(state=tk.NORMAL)
+    user_input_e.delete("1.0", "end")
+
+    # creating other widgets
+    user_input_e.grid(column=1, row=1, sticky=tk.N)
+    user_input_e.insert('1.0', "This is a default message. Delete me and write your own!")
+    browse_btn_e.grid(column=0, row=1, ipady=5, sticky=tk.S)
     encode_msg_btn.grid(column=1, row=1, ipady=5, sticky=tk.S)
     export_btn.grid(column=0, row=3, ipady=5)
     email_btn.grid(column=1, row=3, ipady=5)
+    help_btn.grid(column=1, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NE)
+    back_btn.grid(column=0, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NW)
 
-    browse_btn.configure(command=lambda: browse_press())
-    encode_msg_btn.configure(command=lambda: non_func_press("this button will encode the message into the image"))
-    export_btn.configure(command=lambda: export_press())
-    email_btn.configure(command=lambda: non_func_press("this button will email the message into a recipient"))
+    encode_frame.pack(fill=tk.BOTH, expand=True)
+
+
+def encode_screen_off():
+    encode_frame.forget()
+
+
+def decode_screen_on():
+    # turn other screens off
+    welcome_screen_off()
+    encode_screen_off()
+    help_screen_off()
+
+    # create the grid
+    decode_frame.rowconfigure(0, weight=1)
+    decode_frame.rowconfigure(1, weight=1)
+    decode_frame.rowconfigure(2, weight=1)
+    decode_frame.rowconfigure(3, weight=1)
+    decode_frame.columnconfigure(0, weight=1)
+    decode_frame.columnconfigure(1, weight=1)
+
+    decode_label = ttk.Label(decode_frame,
+                             text="Decode a Message",
+                             font=("Garamond", 18))
+    img_label_d = tk.Label(decode_frame)
+    browse_btn_d = ttk.Button(decode_frame,
+                              text='Browse',
+                              command=lambda: browse_btn_press(img_label_d))
+    user_input_d = Text(decode_frame,
+                        height=18.5,
+                        width=40,
+                        wrap='word')
+    decode_msg_btn = ttk.Button(decode_frame,
+                                text='Decode Message',
+                                command=lambda: decode_msg_press())
+    reply_btn = ttk.Button(decode_frame,
+                           text='Reply',
+                           command=lambda: encode_screen_on())
+    help_btn = ttk.Button(decode_frame,
+                          text='help',
+                          command=lambda: help_screen_on())
+    back_btn = ttk.Button(decode_frame,
+                          text='back',
+                          command=lambda: back_btn_press())
+
+    decode_label.grid(column=0, row=0, columnspan=2)
+
+    load_img(img_label_d, "")
+
+    # put widgets in frame
+    back_btn.grid(column=0, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NW)
+    user_input_d.grid(column=1, row=1, sticky=tk.N)
+    user_input_d.insert('1.0', 'The decoded message will appear here')
+    user_input_d.config(state=tk.DISABLED)
+
+    browse_btn_d.grid(column=0, row=1, ipady=5, sticky=tk.S)
+    decode_msg_btn.grid(column=1, row=1, ipady=5, sticky=tk.S)
+    reply_btn.grid(column=0, row=3, columnspan=2, ipady=5)
+    help_btn.grid(column=1, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NE)
+
+    decode_frame.pack(fill=tk.BOTH, expand=True)
+
+
+def decode_screen_off():
+    decode_frame.forget()
+
+
+def help_screen_on():
+    # turn other screens off
+    welcome_screen_off()
+    decode_screen_off()
+    encode_screen_off()
+
+    help_link = "https://www.mygreatlearning.com/blog/image-steganography-explained/"
+
+    # create the grid
+    help_frame.rowconfigure(0, weight=1)
+    help_frame.rowconfigure(1, weight=7)
+    help_frame.rowconfigure(2, weight=1)
+    help_frame.rowconfigure(3, weight=1)
+    help_frame.columnconfigure(0, weight=1)
+    help_frame.columnconfigure(1, weight=1)
+
+    encode_help = ttk.Label(help_frame,
+                            text='These are the instructions for encoding a message in an image',
+                            font=("Garamond", 16),
+                            wraplength=400)
+    decode_help = ttk.Label(help_frame,
+                            text='These are the instructions for decoding a message from an image',
+                            font=("Garamond", 16),
+                            wraplength=400)
+    more_info = ttk.Label(help_frame,
+                          text='Click this link for more information on steganography:',
+                          font=("Garamond", 14))
+    more_info_link = ttk.Label(help_frame,
+                               text=help_link,
+                               font=("Garamond", 16),
+                               foreground='blue')
+    back_btn = ttk.Button(help_frame,
+                          text='back',
+                          command=lambda: back_btn_press())
+
+    def hyperlink():
+        # CITATION: adapted from source link for opening a link in python
+        # DATE: February 13, 2022
+        # SOURCE: https://www.tutorialspoint.com/how-to-create-a-hyperlink-with-a-label-in-tkinter
+        webbrowser.open_new(help_link)
+
+        # change the color of the link to indicate it was clicked
+        more_info_link.configure(foreground="purple")
+
+    miab_gui_service.rowconfigure(1, weight=1)
+
+    encode_help.grid(column=0, row=1, sticky=tk.N)
+    decode_help.grid(column=1, row=1, sticky=tk.N)
+    more_info.grid(column=0, row=2, columnspan=2, sticky=tk.S)
+    more_info_link.grid(column=0, row=3, columnspan=2, ipadx=2, sticky=tk.N)
+    more_info_link.bind("<Button-1>", lambda e: hyperlink())
+    back_btn.grid(column=0, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NW)
+
+    help_frame.pack(fill=tk.BOTH, expand=True)
+
+
+def help_screen_off():
+    help_frame.forget()
+
+
+def back_btn_press():
+    welcome_screen_on()
+    encode_screen_off()
+    decode_screen_off()
+    help_screen_off()
+
+
+# ----------------- IMG DISPLAY -----------------
+def get_image():
+    # will get image from partner's image service
+
+    img_path = "./MIAB_DEFAULT.jpg"
+
+    return img_path
 
 
 def get_crop_size(w, h):
@@ -223,11 +298,13 @@ def get_crop_size(w, h):
         return 0, left, w, right
 
 
-def load_img(path):
+def load_img(label, path):
+    default = 'Click ''Browse'' to select an image'
+    default_msg = ttk.Label(miab_gui_service,
+                            text=default,
+                            font=("Garamond", 12))
 
     if path != "":
-
-        global img
 
         default_msg.grid_forget()
 
@@ -242,162 +319,153 @@ def load_img(path):
         img = img.crop(size_tuple)
 
         img2 = ImageTk.PhotoImage(img.resize(resize))
-        img_label.Image = img2
-        img_label.configure(image=img2)
+        label.Image = img2
+        label.configure(image=img2)
 
-        img_label.grid(column=0, row=1, sticky=tk.N)
+        label.grid(column=0, row=1, sticky=tk.N)
 
     else:
         default_msg.grid(column=0, row=1)
 
 
-def non_func_press(msg):
-    popup = tk.Tk()
-    popup.geometry('300x100')
-    popup.eval('tk::PlaceWindow . center')
-    popup.title("placeholder popup")
-    ttk.Label(popup, text=msg).pack()
-
-
+# ----------------- STEGANOGRAPHY -----------------
 def encode_msg_press():
     pass
 
 
-def email_press():
+def decode_msg_press():
     pass
 
 
-def decode_press():
+# ----------------- BUTTON FUNC -----------------
+def email_btn_press(img_path):
+    # create the window
+    email_popup = tk.Tk()
+    email_popup.geometry("350x250")
+    email_popup.eval('tk::PlaceWindow . center')
 
-    # close other screen widgets
-    global welcome_on, encode_on, decode_on, help_on
-    close(welcome_on, encode_on, decode_on, help_on)
+    # configure the grid
+    email_popup.columnconfigure(0, weight=1)
+    email_popup.columnconfigure(1, weight=1)
+    email_popup.rowconfigure(0, weight=3)
+    email_popup.rowconfigure(1, weight=3)
+    email_popup.rowconfigure(2, weight=1)
 
-    clearToTextInput()
+    def write_to_file(s, r, sub, msg):
+        data = s + '\n' + r + '\n' + sub + '\n' + img_path + '\n' + msg
+        file_path = os.path.abspath("email_service_data/email_data.txt")
+        with open(file_path, 'w') as e_data:
+            e_data.write(data)
 
-    decode_on = True
+    # create widgets
+    sender = recipient = e_sub = e_msg = StringVar()
+    s_email_entry = Entry(email_popup, textvariable=sender, width=50)
+    s_email_entry.delete(0, tk.END)
 
-    decode_label.grid(column=0, row=0, columnspan=2)
+    r_email_entry = Entry(email_popup, textvariable=recipient, width=50)
+    r_email_entry.delete(0, tk.END)
 
-    load_img("")
+    subject_entry = Entry(email_popup, textvariable=e_sub, width=50)
+    subject_entry.delete(0, tk.END)
 
-    # other widgets
-    user_input.grid(column=1, row=1, sticky=tk.N)
-    user_input.insert('1.0', 'The decoded message will appear here')
-    user_input.config(state=tk.DISABLED)
+    message_entry = Entry(email_popup, textvariable=e_msg, width=50)
+    message_entry.delete(0, tk.END)
 
-    browse_btn.grid(column=0, row=1, ipady=5, sticky=tk.S)
-    decode_msg_btn.grid(column=1, row=1, ipady=5, sticky=tk.S)
-    reply_btn.grid(column=0, row=3, columnspan=2, ipady=5)
+    send_button = ttk.Button(email_popup, text="Send", command=lambda: write_to_file(sender.get(), recipient.get(),
+                                                                                     e_sub.get(), e_msg.get()))
 
-    browse_btn.configure(command=lambda: browse_press())
-    decode_msg_btn.configure(command=lambda: non_func_press("this button will decode the message from the image"))
-    reply_btn.configure(command=lambda: encode_press())
+    cancel_btn = ttk.Button(email_popup, text='Cancel', command=lambda: email_popup.destroy())
 
+    # pack widgets into window
+    ttk.Label(email_popup,
+              text="Please fill out the following information to send your email:").grid(row=0,
+                                                                                         column=0,
+                                                                                         columnspan=2,
+                                                                                         sticky=tk.N)
+    ttk.Label(email_popup, text="Sender's Email:").grid(row=1, column=0, sticky=tk.N)
+    s_email_entry.grid(row=1, column=0)
+    ttk.Label(email_popup, text="Recipient's Email:").grid(row=1, column=1, sticky=tk.N)
+    r_email_entry.grid(row=1, column=1)
+    ttk.Label(email_popup, text="Subject:").grid(row=2, column=0, columnspan=2, sticky=tk.N)
+    subject_entry.grid(row=2, column=0)
+    ttk.Label(email_popup, text="Message:").grid(row=2, column=1, columnspan=2, sticky=tk.N)
+    message_entry.grid(row=2, column=1)
+    send_button.grid(row=3, column=0)
+    cancel_btn.grid(row=3, column=1)
 
-def help_press():
-
-    # remove the welcome screen widgets
-    # close other screen widgets
-    global welcome_on, encode_on, decode_on, help_on
-    close(welcome_on, encode_on, decode_on, help_on)
-
-    help_on = True
-
-    miab_gui_service.rowconfigure(1, weight=7)
-
-    # add the help screen widgets
-    encode_help.grid(column=0, row=1, sticky=tk.N)
-    decode_help.grid(column=1, row=1, sticky=tk.N)
-    more_info.grid(column=0, row=2, columnspan=2, sticky=tk.S)
-    more_info_link.grid(column=0, row=3, columnspan=2, ipadx=2, sticky=tk.N)
-    more_info_link.bind("<Button-1>", lambda e: hyperlink(help_link))
-
-
-def back_press():
-
-    global welcome_on, encode_on, decode_on, help_on
-    close(welcome_on, encode_on, decode_on, help_on)
-
-    open_welcome()
+    # show window
+    email_popup.mainloop()
 
 
-def browse_press():
+def browse_btn_press(label):
     # browse for a png file
     # COMMENT: adapted from the source link for opening a browse window for files
-    # DATE: February 14 2022
+    # DATE: February 14, 2022
     # SOURCE: https://docs.python.org/3/library/dialog.html,
     #         https://www.geeksforgeeks.org/file-explorer-in-python-using-tkinter/
+    #
+    # initial_dir = "C:/Users/" + str(getpass.getuser()) + "/Desktop"
+    #
+    # filename = filedialog.askopenfilename(title='Select an Image',
+    #                                       initialdir=initial_dir,
+    #                                       filetypes=[(".png, .jpg", ".png .jpg")])
+    #
+    #
+    # if filename != "":
+    #     # if a file is selected, open the image and format it, otherwise do nothing
+    #     load_img(filename)
+    #     return filename
+    popup("Will browse for image")
 
-    initial_dir = "C:/Users/" + str(getpass.getuser()) + "/Desktop"
 
-    filename = filedialog.askopenfilename(title='Select an Image',
-                                          initialdir=initial_dir,
-                                          filetypes=[(".png, .jpg", ".png .jpg")])
-
-    if filename != "":
-        # if a file is selected, open the image and format it, otherwise do nothing
-        load_img(filename)
-
-
-def export_press():
+def export_btn_press(path):
     # browse for a png file
+
     # COMMENT: adapted from the source link for saving a file
-    # DATE: February 14 2022
+    # DATE: February 14, 2022
     # SOURCE: https://www.geeksforgeeks.org/python-asksaveasfile-function-in-tkinter/
 
-    initial_dir = "C:/Users/" + str(getpass.getuser()) + "/Desktop"
+    initial_dir = os.path.abspath("/Desktop")
 
     file_loc = filedialog.asksaveasfilename(title='Save your image',
                                             initialdir=initial_dir,
                                             filetypes=[(".png", ".png")])
     if file_loc != "":
 
-        img.save(file_loc)
+        img_open = Image.open(path)
+        img_open.save(file_loc)
 
-        popup = tk.Tk()
-        popup.geometry("200x50")
-        popup.eval('tk::PlaceWindow . center')
-        popup.title("")
-        ttk.Label(popup, text="Image successfully saved!").pack()
-        popup.mainloop()
+        popup("Image successfully saved!")
 
     else:
-
-        popup = tk.Tk()
-        popup.geometry("200x50")
-        popup.eval('tk::PlaceWindow . center')
-        popup.title("")
-        ttk.Label(popup, text="Image not saved").pack()
-        popup.mainloop()
+        popup("Image not saved")
 
 
-def hyperlink(url):
-    # CITATION: adapted from source link for opening a link in python
-    # DATE: February 13 2022
-    # SOURCE: https://www.tutorialspoint.com/how-to-create-a-hyperlink-with-a-label-in-tkinter
-    webbrowser.open_new(url)
+# ----------------- GENERAL "POP-UP" GUI -----------------
+def popup(msg):
+    popup_wind = tk.Tk()
+    popup_wind.geometry("350x100")
+    popup_wind.eval('tk::PlaceWindow . center')
+    popup_wind.title("")
+    ttk.Label(popup_wind, text=msg).pack()
 
-    # change the color of the link to indicate it was clicked
-    more_info_link.configure(foreground="purple")
+    popup_wind.after(5000, lambda: popup_wind.destroy())  # destroy window after 5 seconds
+
+    popup_wind.mainloop()
 
 
-def clearToTextInput():
-    user_input.delete("1.0", "end")
-
-
+# ----------------- THE GUI -----------------
 def MIAB_GUI():
     # custom for MIAB - icon and title
     miab_gui_service.title("Message in a Bottle")
     miab_gui_service.iconbitmap("./MIAB_icon.ico")
-    miab_gui_service.resizable(False, False)
 
     window_height = 700
     window_width = 900
 
     # code that centers the window on the computer screen
     # CITATION: adapted from source link for centering a tkinter window on any computer screen
-    # DATE: February 13 2022
+    # DATE: February 13, 2022
     # SOURCE: https://www.pythontutorial.net/tkinter/tkinter-window/
 
     # get screen height and width
@@ -410,23 +478,8 @@ def MIAB_GUI():
 
     miab_gui_service.geometry(f'{window_width}x{window_height}+{center_wind_x}+{center_wind_y}')
 
-    # configure the grid
-    miab_gui_service.columnconfigure(0, weight=1)
-    miab_gui_service.columnconfigure(1, weight=1)
-    miab_gui_service.rowconfigure(0, weight=1)
-    miab_gui_service.rowconfigure(1, weight=1)
-    miab_gui_service.rowconfigure(2, weight=1)
-    miab_gui_service.rowconfigure(3, weight=1)
-
-    open_welcome()
-
-    help_btn.grid(column=1, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NE)
-
-    # commands for each button
-    encode_btn.configure(command=lambda: encode_press())
-    decode_btn.configure(command=lambda: decode_press())
-    help_btn.configure(command=lambda: help_press())
-    back_btn.configure(command=lambda: back_press())
+    # open the welcome screen widgets
+    welcome_screen_on()
 
     # displays the window
     miab_gui_service.mainloop()
