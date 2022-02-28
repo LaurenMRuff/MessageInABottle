@@ -458,6 +458,12 @@ def email_btn_press(img_path):
             # wait for a file path to exist before returning to normal function
             time.sleep(1)
 
+        if os.path.exists(success_file):
+            os.remove(success_file)
+
+        if os.path.exists(fail_file):
+            os.remove(fail_file)
+
         return
 
         # if os.path.exists(success_file):
