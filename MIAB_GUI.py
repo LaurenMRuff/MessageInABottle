@@ -9,7 +9,7 @@
 
 import os.path
 import tkinter as tk
-from tkinter import ttk, Text, filedialog, Entry, StringVar
+from tkinter import ttk, Text, filedialog, Entry
 from PIL import Image, ImageTk
 import webbrowser
 import time
@@ -465,15 +465,13 @@ def email_btn_press(img_path):
         # elif os.path.exists(success_file):
         #     popup("Email failed to send")
 
-    # create widgets
-    sender = recipient = e_sub = StringVar()
-    s_email_entry = Entry(email_popup, textvariable=sender, width=45)
+    s_email_entry = Entry(email_popup, width=45)
     s_email_entry.delete(0, tk.END)
 
-    r_email_entry = Entry(email_popup, textvariable=recipient, width=45)
+    r_email_entry = Entry(email_popup, width=45)
     r_email_entry.delete(0, tk.END)
 
-    subject_entry = Entry(email_popup, textvariable=e_sub, width=70)
+    subject_entry = Entry(email_popup, width=70)
     subject_entry.delete(0, tk.END)
 
     message_entry = Text(email_popup, height=5, width=60)
@@ -481,9 +479,9 @@ def email_btn_press(img_path):
 
     send_button = ttk.Button(email_popup,
                              text="Send",
-                             command=lambda: write_to_file(sender.get(),
-                                                           recipient.get(),
-                                                           e_sub.get(),
+                             command=lambda: write_to_file(s_email_entry.get(),
+                                                           r_email_entry.get(),
+                                                           subject_entry.get(),
                                                            message_entry.get("1.0", "end-1c"))
                              )
 
