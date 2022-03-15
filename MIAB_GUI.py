@@ -147,7 +147,8 @@ def encode_screen_on():
     help_btn.grid(column=1, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NE)
     back_btn.grid(column=0, row=0, ipadx=3, ipady=3, padx=7, pady=7, sticky=tk.NW)
     user_input_e.grid(column=1, row=1, sticky=tk.N)
-    user_input_e.insert('1.0', "This is a default message. Delete me and write your own!")
+    user_input_e.insert('1.0', "This is a default message. Delete me and write your own, then click the \"Encode "
+                               "Message\" button to encode your message in the selected image!")
     browse_btn_e.grid(column=0, row=1, ipady=5, sticky=tk.S)
     encode_msg_btn.grid(column=1, row=1, ipady=5, sticky=tk.S)
 
@@ -173,7 +174,8 @@ def decode_screen_on():
     encode_screen_off()
     help_screen_off()
     path = ""
-    msg = "The decoded message will appear here"
+    msg = "Click \"Decode Message\" to decode the message from the selected image. " \
+          "The decoded message will appear here."
 
     def get_img_path():
         # stores the path of the current image
