@@ -2,7 +2,7 @@
 # Email: ruffl@oregonstate.edu
 # Assignment: 10, Portfolio
 # Due Date: March 18, 2022
-# Version: 3.0, Release
+# Version: 3.1, Release
 # File: Encode_Decode.py
 # Description: This file contains the algorithm for encoding or decoding a message from a photo (png or jgp) adapted
 #              from a Geeks2Geeks article. Source Code can be found at the SOURCE link. It also contains functions for

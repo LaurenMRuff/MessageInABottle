@@ -2,7 +2,7 @@
 # Email: ruffl@oregonstate.edu
 # Assignment: 10, Portfolio
 # Due Date: March 18, 2022
-# Version: 3.0, Release
+# Version: 3.1, Release
 # File: MIAB_GUI.py
 # Description: This file contains the code for creating the GUI the user will interact with in encode messages into
 #              images and decode messages from images.
