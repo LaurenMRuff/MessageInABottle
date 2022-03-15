@@ -1,202 +1,105 @@
 # AUTHOR: Lauren Ruff
 # Email: ruffl@oregonstate.edu
-# Assignment: 8, Integration
-# Due Date: February 28 2022
-# Version: 1.0
+# Assignment: 10, Portfolio
+# Due Date: March 18, 2022
+# Version: 3.0, Release
 # File: Encode_Decode.py
 # Description: This file contains the algorithm for encoding or decoding a message from a photo (png or jgp) adapted
-#              from a Github repository created by RobinDavid. Source Code can be found at the SOURCE link. According to
-#              the author, to encode a message in an image, the algorithm uses 'the first bit of every pixel, and every
-#              colour of an image'.
-
-"""LSBSteg.py
-Usage:
-  LSBSteg.py encode -i <input> -o <output> -f <file>
-  LSBSteg.py decode -i <input> -o <output>
-Options:
-  -h, --help                Show this help
-  --version                 Show the version
-  -f,--file=<file>          File to hide
-  -i,--in=<input>           Input image (carrier)
-  -o,--out=<output>         Output image (or extracted file)
-"""
+#              from a Geeks2Geeks article. Source Code can be found at the SOURCE link. It also contains functions for
+#              generating popups and centering windows on the screen
+#
+# Source: https://www.geeksforgeeks.org/image-based-steganography-using-python/
 
 import cv2
-import docopt
-import numpy as np
+from file_read_backwards import FileReadBackwards
+import os
+import tkinter as tk
+from tkinter import ttk
 
 
-class SteganographyException(Exception):
-    pass
+# ----------------- GENERIC "POP-UP" GUI -----------------
+def popup(msg):
+    """
+    This is a generic popup for success and error messages to be shown to the user
+    :param msg: the message to be printed in the popup
+    """
+    popup_wind = tk.Tk()
+    w, h = 300, 30
+
+    # get screen height and width
+    center_screen(popup_wind, w, h)
+
+    popup_wind.title("")
+    ttk.Label(popup_wind, text=msg).pack()
+
+    popup_wind.mainloop()
+
+    # window will be destroyed after 5 seconds if the user does not click the x button
+    popup_wind.after(5000, lambda: popup_wind.destroy())  # destroy window after 5 seconds
 
 
-class LSBSteg:
-    def __init__(self, im):
-        self.image = im
-        self.height, self.width, self.nbchannels = im.shape
-        self.size = self.width * self.height
+# ----------------- SCREEN CONFIG FUNCTION(S) -----------------
+def center_screen(frame, w, h):
+    # code that centers the window on the computer screen
+    # CITATION: adapted from source link for centering a tkinter window on any computer screen
+    # DATE: February 13, 2022
+    # SOURCE: https://www.pythontutorial.net/tkinter/tkinter-window/
 
-        self.maskONEValues = [1, 2, 4, 8, 16, 32, 64, 128]
-        # Mask used to put one ex:1->00000001, 2->00000010 .. associated with OR bitwise
-        self.maskONE = self.maskONEValues.pop(0)  # Will be used to do bitwise operations
+    # get screen height and width
+    screen_height = frame.winfo_screenheight()
+    screen_width = frame.winfo_screenwidth()
 
-        self.maskZEROValues = [254, 253, 251, 247, 239, 223, 191, 127]
-        # Mak used to put zero ex:254->11111110, 253->11111101 .. associated with AND bitwise
-        self.maskZERO = self.maskZEROValues.pop(0)
+    # calculate x and y offsets using screen h/w and gui h/w
+    center_wind_x = int(screen_width / 2 - w / 2)
+    center_wind_y = int(screen_height / 2 - h / 2)
 
-        self.curwidth = 0  # Current width position
-        self.curheight = 0  # Current height position
-        self.curchan = 0  # Current channel position
+    frame.geometry(f'{w}x{h}+{center_wind_x}+{center_wind_y}')
+    frame.resizable(False, False)
 
-    def put_binary_value(self, bits):  # Put the bits in the image
-        for c in bits:
-            val = list(self.image[self.curheight, self.curwidth])  # Get the pixel value as a list
-            if int(c) == 1:
-                val[self.curchan] = int(val[self.curchan]) | self.maskONE  # OR with maskONE
+
+# ----------------- ENCODE FUNCTION(S) -----------------
+def encode(msg, img_path):
+    # open the image and create a copy in the encoded_images location
+    img = cv2.imread(img_path)
+    head_tail = os.path.split(img_path)
+    ext = os.path.splitext(head_tail[1])
+    enc_file_loc = os.environ["USERPROFILE"] + "\\Desktop\\EncodedMessages\\" + ext[0] + "_encoded" + ext[1]
+    cv2.imwrite(enc_file_loc, img)
+
+    msg_str = "\n" + msg.strip() + "\n" + str(len(msg.strip()))
+
+    # append it to the end of the image file, save and close the image
+    with open(enc_file_loc, "a") as f:
+        f.write(msg_str)
+    f.close()
+
+    return enc_file_loc
+
+
+# ----------------- DECODE FUNCTION(S) -----------------
+def decode(img_path):
+    # open the file for reading and get the last line in the file
+
+    char_count = 0
+    msg_chars = 0
+    decoded_msg = ''
+
+    with FileReadBackwards(img_path, encoding="utf-8") as f:
+        for line in f:
+            if msg_chars == 0:
+                try:
+                    msg_chars = int(line)
+
+                except UnicodeDecodeError:
+                    return -1
+
             else:
-                val[self.curchan] = int(val[self.curchan]) & self.maskZERO  # AND with maskZERO
+                char_count += len(line)
 
-            self.image[self.curheight, self.curwidth] = tuple(val)
-            self.next_slot()  # Move "cursor" to the next space
+                decoded_msg = str(line) + decoded_msg
 
-    def next_slot(self):  # Move to the next slot were information can be taken or put
-        if self.curchan == self.nbchannels - 1:  # Next Space is the following channel
-            self.curchan = 0
-            if self.curwidth == self.width - 1:  # Or the first channel of the next pixel of the same line
-                self.curwidth = 0
-                if self.curheight == self.height - 1:  # Or the first channel of the first pixel of the next line
-                    self.curheight = 0
-                    if self.maskONE == 128:  # Mask 1000000, so the last mask
-                        raise SteganographyException("No available slot remaining (image filled)")
-                    else:  # Or instead of using the first bit start using the second and so on..
-                        self.maskONE = self.maskONEValues.pop(0)
-                        self.maskZERO = self.maskZEROValues.pop(0)
-                else:
-                    self.curheight += 1
-            else:
-                self.curwidth += 1
-        else:
-            self.curchan += 1
+                if char_count == msg_chars:
+                    break
+    f.close()
 
-    def read_bit(self):  # Read a single bit int the image
-        val = self.image[self.curheight, self.curwidth][self.curchan]
-        val = int(val) & self.maskONE
-        self.next_slot()
-        if val > 0:
-            return "1"
-        else:
-            return "0"
-
-    def read_byte(self):
-        return self.read_bits(8)
-
-    def read_bits(self, nb):  # Read the given number of bits
-        bits = ""
-        for i in range(nb):
-            bits += self.read_bit()
-        return bits
-
-    def byteValue(self, val):
-        return self.binary_value(val, 8)
-
-    def binary_value(self, val, bitsize):  # Return the binary value of an int as a byte
-        binval = bin(val)[2:]
-        if len(binval) > bitsize:
-            raise SteganographyException("binary value larger than the expected size")
-        while len(binval) < bitsize:
-            binval = "0" + binval
-        return binval
-
-    def encode_text(self, txt):
-        l = len(txt)
-        binl = self.binary_value(l, 16)  # Length coded on 2 bytes so the text size can be up to 65536 bytes long
-        self.put_binary_value(binl)  # Put text length coded on 4 bytes
-        for char in txt:  # And put all the chars
-            c = ord(char)
-            self.put_binary_value(self.byteValue(c))
-        return self.image
-
-    def decode_text(self):
-        ls = self.read_bits(16)  # Read the text size in bytes
-        l = int(ls, 2)
-        i = 0
-        unhideTxt = ""
-        while i < l:  # Read all bytes of the text
-            tmp = self.read_byte()  # So one byte
-            i += 1
-            unhideTxt += chr(int(tmp, 2))  # Every chars concatenated to str
-        return unhideTxt
-
-    def encode_image(self, imtohide):
-        w = imtohide.width
-        h = imtohide.height
-        if self.width * self.height * self.nbchannels < w * h * imtohide.channels:
-            raise SteganographyException("Carrier image not big enough to hold all the datas to steganography")
-        binw = self.binary_value(w, 16)  # Width coded on to byte so width up to 65536
-        binh = self.binary_value(h, 16)
-        self.put_binary_value(binw)  # Put width
-        self.put_binary_value(binh)  # Put height
-        for h in range(imtohide.height):  # Iterate the hole image to put every pixel values
-            for w in range(imtohide.width):
-                for chan in range(imtohide.channels):
-                    val = imtohide[h, w][chan]
-                    self.put_binary_value(self.byteValue(int(val)))
-        return self.image
-
-    def decode_image(self):
-        width = int(self.read_bits(16), 2)  # Read 16bits and convert it in int
-        height = int(self.read_bits(16), 2)
-        unhideimg = np.zeros((width, height, 3), np.uint8)  # Create an image in which we will put all the pixels read
-        for h in range(height):
-            for w in range(width):
-                for chan in range(unhideimg.channels):
-                    val = list(unhideimg[h, w])
-                    val[chan] = int(self.read_byte(), 2)  # Read the value
-                    unhideimg[h, w] = tuple(val)
-        return unhideimg
-
-    def encode_binary(self, data):
-        l = len(data)
-        if self.width*self.height*self.nbchannels < l+64:
-            raise SteganographyException("Carrier image not big enough to hold all the datas to steganography")
-        self.put_binary_value(self.binary_value(l, 64))
-        for byte in data:
-            byte = byte if isinstance(byte, int) else ord(byte) # Compat py2/py3
-            self.put_binary_value(self.byteValue(byte))
-        return self.image
-
-    def decode_binary(self):
-        l = int(self.read_bits(64), 2)
-        output = b""
-        for i in range(l):
-            output += bytearray([int(self.read_byte(),2)])
-        return output
-
-
-def main():
-    args = docopt.docopt(__doc__, version="0.2")
-    in_f = args["--in"]
-    out_f = args["--out"]
-    in_img = cv2.imread(in_f)
-    steg = LSBSteg(in_img)
-    lossy_formats = ["jpeg", "jpg"]
-
-    if args['encode']:
-        # Handling lossy format
-        out_f, out_ext = out_f.split(".")
-        if out_ext in lossy_formats:
-            out_f = out_f + ".png"
-            print("Output file changed to ", out_f)
-
-        data = open(args["--file"], "rb").read()
-        res = steg.encode_binary(data)
-        cv2.imwrite(out_f, res)
-
-    elif args["decode"]:
-        raw = steg.decode_binary()
-        with open(out_f, "wb") as f:
-            f.write(raw)
-
-
-if __name__ == "__main__":
-    main()
+    return decoded_msg
